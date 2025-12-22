@@ -15,28 +15,8 @@
 一般的なECサイトにおいて、本サービスは\*\*「購入ボタン押下後」から「商品発送・受取」までのコアプロセス\*\*を担当する。
 
 **【ECシステム全体俯瞰図】**
-
-graph TD  
-    User((🛒 ユーザー)) \--\>|購入操作| Frontend\[📱 ブラウザ / アプリ\]  
-    Frontend \--\>|API| Gateway\[🌐 API Gateway / BFF\]  
-      
-    subgraph Services \[マイクロサービス群\]  
-        Gateway \--\> Member\[👤 会員サービス\]  
-        Gateway \--\> Item\[📦 商品サービス\]  
-        Gateway \--\> Cart\[🛒 カートサービス\]  
-        Gateway \--\> Payment\[💳 決済サービス\]  
-          
-        Gateway \--\> Order\[★ 📜 注文管理サービス\<br\>（本システム）\]  
-    end  
-      
-    subgraph Logistics \[物流・配送\]  
-        Order \--\>|出荷指示| Delivery\[🚚 物流/配送サービス\]  
-        Delivery \--\>|配送状況/完了通知| Order  
-    end
-
-    Payment \-.-\>|決済結果| Order  
-      
-    style Order fill:\#f9f,stroke:\#333,stroke-width:4px
+![ECシステム全体俯瞰図](./docs/images/system_overview.png "サンプル")
+*(※ 画像が表示されない場合は docs/images/ フォルダに画像ファイルがあるか確認してください)*
 
 ### **1-2. 本サービスの担当範囲 (Scope)**
 
@@ -55,36 +35,9 @@ graph TD
 
 本サービス（Order Service）は、認証、通知、ログ基盤と連携して動作する。
 
-graph LR  
-    Client\[クライアント\] \--\>|REST API| Order\[🛒 注文管理サービス\]  
-      
-    Order \--\>|Verify| Auth\[🔑 認証サービス\<br\>(Mock)\]  
-    Order \--\>|Async| Notif\[🔔 通知サービス\<br\>(Mock)\]  
-    Order \--\>|JDBC| DB\[(🐘 注文DB\<br\>PostgreSQL)\]  
-      
-    style Order fill:\#f9f,stroke:\#333,stroke-width:2px
-
 ### **2-2. データモデル (ER図)**
 
 orders テーブルと order\_items テーブルは 1対多 の関係を持つ。
-
-erDiagram  
-    ORDER ||--|{ ORDER\_ITEM : "contains"  
-    ORDER {  
-        long id PK  
-        long customer\_id  
-        string status  
-        decimal total\_amt  
-        datetime ordered\_at  
-        string tracking\_no  
-    }  
-    ORDER\_ITEM {  
-        long id PK  
-        long order\_id FK  
-        long product\_id  
-        int quantity  
-        decimal unit\_price  
-    }
 
 **補足:**
 
