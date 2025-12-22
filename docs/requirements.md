@@ -16,28 +16,27 @@
 
 **【ECシステム全体俯瞰図】**
 
-       \[🛒 ユーザー (ブラウザ/アプリ)\]  
-                  |  
-                  v  
-          \[API Gateway / BFF\]  
-                  |  
-    \+-------------+-------------+---------------------+----------------+  
-    |             |             |                     |                |  
-\[👤会員サービス\] \[📦商品サービス\] \[🛒カートサービス\]    ★【📜注文管理サービス】  \[💳決済サービス\]  
- ログイン      商品検索      カゴに入れる        ｜(本システム)       クレカ決済  
- 顧客情報      在庫参照      一時保存           ｜                 領収書発行  
-                                             ｜  
-                                             v  
-                                     \+---------------+  
-                                     | 注文受付・確定 |  
-                                     | 金額計算       |  
-                                     | ステータス管理 |  
-                                     \+-------+-------+  
-                                             |  
-                                             v  
-                                     \[🚚物流/配送サービス\]  
-                                       出荷指示・配送追跡  
-                                       配達完了通知
+graph TD  
+    User((🛒 ユーザー)) \--\>|購入操作| Frontend\[📱 ブラウザ / アプリ\]  
+    Frontend \--\>|API| Gateway\[🌐 API Gateway / BFF\]  
+      
+    subgraph Services \[マイクロサービス群\]  
+        Gateway \--\> Member\[👤 会員サービス\]  
+        Gateway \--\> Item\[📦 商品サービス\]  
+        Gateway \--\> Cart\[🛒 カートサービス\]  
+        Gateway \--\> Payment\[💳 決済サービス\]  
+          
+        Gateway \--\> Order\[★ 📜 注文管理サービス\<br\>（本システム）\]  
+    end  
+      
+    subgraph Logistics \[物流・配送\]  
+        Order \--\>|出荷指示| Delivery\[🚚 物流/配送サービス\]  
+        Delivery \--\>|配送状況/完了通知| Order  
+    end
+
+    Payment \-.-\>|決済結果| Order  
+      
+    style Order fill:\#f9f,stroke:\#333,stroke-width:4px
 
 ### **1-2. 本サービスの担当範囲 (Scope)**
 
@@ -56,39 +55,36 @@
 
 本サービス（Order Service）は、認証、通知、ログ基盤と連携して動作する。
 
-\+------------------+  
-| Client / FrontEnd|  
-\+------------------+  
-        |  
-        | HTTPS / REST API  
-        v  
-\+-------------------------------------------------------+  
-|              🛒 注文管理サービス (本システム)           |  
-|            (Order Management Microservice)            |  
-\+-------------------------------------------------------+  
-        |                    |                    |  
-        | Verify (Mock)      | Async (Mock)       | JDBC  
-        v                    v                    v  
-\+----------------+   \+----------------+   \+----------------+  
-| 🔑 認証サービス |   | 🔔 通知サービス |   | 🐘 注文DB      |  
-| (Auth Service)  |   | (Notif Service)|   | (PostgreSQL)   |  
-\+----------------+   \+----------------+   \+----------------+
+graph LR  
+    Client\[クライアント\] \--\>|REST API| Order\[🛒 注文管理サービス\]  
+      
+    Order \--\>|Verify| Auth\[🔑 認証サービス\<br\>(Mock)\]  
+    Order \--\>|Async| Notif\[🔔 通知サービス\<br\>(Mock)\]  
+    Order \--\>|JDBC| DB\[(🐘 注文DB\<br\>PostgreSQL)\]  
+      
+    style Order fill:\#f9f,stroke:\#333,stroke-width:2px
 
 ### **2-2. データモデル (ER図)**
 
 orders テーブルと order\_items テーブルは 1対多 の関係を持つ。
 
-       1                N  
-\+------------+      \+----------------+  
-|   ORDER    |-----\<|   ORDER\_ITEM   |  
-\+------------+      \+----------------+  
-| PK id      |      | PK id          |  
-| customer\_id|      | FK order\_id    |  
-| status     |      | product\_id     |  
-| total\_amt  |      | quantity       |  
-| ordered\_at |      | unit\_price     |  
-| tracking\_no|      \+----------------+  
-\+------------+
+erDiagram  
+    ORDER ||--|{ ORDER\_ITEM : "contains"  
+    ORDER {  
+        long id PK  
+        long customer\_id  
+        string status  
+        decimal total\_amt  
+        datetime ordered\_at  
+        string tracking\_no  
+    }  
+    ORDER\_ITEM {  
+        long id PK  
+        long order\_id FK  
+        long product\_id  
+        int quantity  
+        decimal unit\_price  
+    }
 
 **補足:**
 
