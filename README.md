@@ -15,7 +15,7 @@
 
 本プロジェクトの詳細な仕様については、以下のドキュメントを参照してください。
 
-* [**要件定義書 (Requirements)**](../order-management-kotlin-service/docs/requirements.md)  
+* [**要件定義書 (Requirements)**](./docs/requirements.md)  
   * システム構成図、ER図、機能要件、API仕様の詳細などを記載しています。
 
 ## **🛠️ 採用技術スタック**
